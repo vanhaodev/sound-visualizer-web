@@ -44,6 +44,10 @@ lightning (chain length, hop speed, density, fade, style), camera pacing and mot
 Hosted for free on **GitHub Pages**, built from the root of the `main` branch
 (repo Settings -> Pages). Every push to `main` redeploys the site within about a minute.
 
+GitHub Pages lets browsers cache files for 10 minutes, so CSS/JS URLs carry an asset version (`?v=2`).
+When you change any CSS/JS file, bump that number everywhere it appears (`index.html` and the imports at the
+top of `js/music-reactive-lightning.js`), otherwise visitors may get a new page with old cached scripts.
+
 ## Project structure
 
 ```
