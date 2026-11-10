@@ -2,18 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>3D Sphere Asteroid Visualizer</title>
+    <title>Storm Sound Visualizer</title>
     <link rel="stylesheet" href="css/visualizer-styles.css">
 </head>
 <body>
 
+    <!-- Full-screen flash on top of the 3D scene (the lightning itself lives in the 3D world) -->
+    <div id="flash-layer"></div>
+
     <div id="ui">
         <div class="box">
-            <h1>ASTEROID 3D</h1>
-            <label class="label-file">
-                [ SELECT PLANET IMAGES ]
-                <input type="file" id="f-img" accept="image/*" multiple>
-            </label>
+            <h1>STORM 3D</h1>
 
             <div class="src-title">AUDIO SOURCE</div>
             <label class="src-opt" id="opt-share">
@@ -35,15 +34,18 @@
 
         <div class="box template-panel">
             <div class="src-title">TEMPLATE</div>
-            <img id="template-cover" class="template-cover" alt="Template cover">
             <div id="template-title" class="template-title"></div>
-            <small id="template-hint" class="template-hint">Bundled track + image, one click</small>
+            <small id="template-hint" class="template-hint">Bundled track, one click</small>
             <button id="btn-template" class="btn">▶ PLAY TEMPLATE</button>
         </div>
+
+        <footer class="home-footer">
+            made by <a href="https://github.com/vanhaodev" target="_blank" rel="noopener">vanhaodev</a>
+        </footer>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Thứ tự quan trọng: config/state → scene → animation → UI khởi động -->
+    <!-- Order matters: config/state -> scene -> animation -> start UI -->
     <script src="js/visualizer-config-and-state.js"></script>
     <script src="js/three-scene-setup.js"></script>
     <script src="js/motion-trail-renderer.js"></script>
@@ -51,5 +53,7 @@
     <script src="js/visualizer-animation-loop.js"></script>
     <script src="js/audio-source-selector-and-start.js"></script>
     <script src="js/template-preset-player.js"></script>
+    <!-- ES module, runs after the scripts above; exposes window.lightningFx -->
+    <script type="module" src="js/music-reactive-lightning.js"></script>
 </body>
 </html>

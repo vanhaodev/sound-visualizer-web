@@ -5,10 +5,6 @@ sample_song.mp3
   All rights belong to the artist and their label.
   Included only to demo the visualizer. Not for commercial use, not redistributed for profit.
 
-template-cover.png
-  Hippie flowers boho seamless pattern - source: pngtree.com
-  All rights belong to the original author.
-
 Rights holders: if you want any file removed, please open an issue and it will be taken down.
 
 To use your own track: replace sample_song.mp3 with any mp3 using the same file name.

@@ -1,4 +1,4 @@
-// Server tĩnh tối giản (chỉ localhost) — cần vì file:// chặn WebGL texture và Web Audio analyser (CORS)
+// Minimal static server (localhost only) - needed because file:// blocks ES modules and the Web Audio analyser (CORS)
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -15,7 +15,7 @@ http.createServer((req, res) => {
     try {
         const urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
         const filePath = path.join(ROOT, urlPath === '/' ? 'index.html' : urlPath);
-        // Chặn path traversal ra ngoài thư mục dự án
+        // Block path traversal outside the project folder
         if (!filePath.startsWith(ROOT + path.sep)) { res.writeHead(403).end('Forbidden'); return; }
 
         fs.stat(filePath, (err, stat) => {

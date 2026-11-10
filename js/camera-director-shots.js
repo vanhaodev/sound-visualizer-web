@@ -1,12 +1,12 @@
-// "Đạo diễn" camera: nhiều góc máy, chuyển mượt (lerp) giữa các góc, bắt đầu chuyển đúng nhịp kick.
-// Không bám theo vật thể nào — mỗi shot chỉ tính vị trí máy + điểm nhìn cố định trong không gian.
-// Shot: setup(state) chạy 1 lần; update(t, state, out) ghi out.pos / out.target (t = giây từ lúc vào shot)
+// Camera "director": several shots, smooth (lerp) glides between them, each move starting on a kick.
+// Follows no object - every shot only computes a camera position + a fixed look-at point in space.
+// Shot: setup(state) runs once; update(t, state, out) writes out.pos / out.target (t = seconds since the shot began)
 
 const randSign = () => (Math.random() < 0.5 ? -1 : 1);
-const FLY_MAX_Z = -5; // điểm dừng của flyThrough: vẫn còn nửa cụm thiên thạch phía trước
+const FLY_MAX_Z = -5; // where flyThrough stops: half of the scene is still ahead
 
 const CAMERA_SHOTS = {
-    // Toàn cảnh xoay vòng quanh cả hệ, nghiêng nhẹ lên xuống
+    // Wide shot orbiting the whole scene, tilting gently up and down
     wideOrbit: {
         setup: (s) => { s.angle = Math.random() * Math.PI * 2; s.dir = randSign(); },
         update: (t, s, out) => {
@@ -16,7 +16,7 @@ const CAMERA_SHOTS = {
         }
     },
 
-    // Lượn gần, nằm ngay trong đám thiên thạch, nhìn về tâm
+    // Close orbit right inside the scene, looking at the center
     closeOrbit: {
         setup: (s) => { s.angle = Math.random() * Math.PI * 2; s.dir = randSign(); s.h = (Math.random() - 0.5) * 10; },
         update: (t, s, out) => {
@@ -26,7 +26,7 @@ const CAMERA_SHOTS = {
         }
     },
 
-    // Nhìn từ trên xuống, xoay chậm như drone
+    // Top-down view, slowly turning like a drone
     topDown: {
         setup: (s) => { s.angle = Math.random() * Math.PI * 2; },
         update: (t, s, out) => {
@@ -36,8 +36,8 @@ const CAMERA_SHOTS = {
         }
     },
 
-    // Bay chậm tiến vào đám thiên thạch theo trục z, nhìn thẳng phía trước.
-    // Dừng ở FLY_MAX_Z để không bay vượt qua cụm rồi nhìn vào khoảng tối
+    // Slow fly forward along z, looking straight ahead.
+    // Stops at FLY_MAX_Z so it never flies past the scene and stares into the void
     flyThrough: {
         setup: (s) => {
             s.x = (Math.random() - 0.5) * 20;
@@ -51,7 +51,7 @@ const CAMERA_SHOTS = {
         }
     },
 
-    // Góc thấp hất lên, dolly tiến dần vào tâm
+    // Low angle looking up, dollying in toward the center
     lowDolly: {
         setup: (s) => { s.angle = Math.random() * Math.PI * 2; },
         update: (t, s, out) => {
@@ -64,16 +64,16 @@ const CAMERA_SHOTS = {
 
 const makePose = () => ({ pos: new THREE.Vector3(), target: new THREE.Vector3() });
 const _curPose = makePose(), _prevPose = makePose(), _lookAt = new THREE.Vector3();
-const CUT_FALLBACK_WAIT = 4;   // giây chờ thêm kick sau khi hết duration, quá thì chuyển luôn
-const MIN_BLEND_DISTANCE = 18; // khoảng cách tối thiểu từ máy tới điểm nhìn trong lúc lướt
+const CUT_FALLBACK_WAIT = 4;   // extra seconds to wait for a kick after the duration; then move on anyway
+const MIN_BLEND_DISTANCE = 18; // minimum camera-to-target distance while gliding
 
-// cur = shot đang chiếu, prev = shot cũ (vẫn chạy tiếp trong lúc blend để chuyển động liền mạch)
+// cur = current shot, prev = old shot (keeps running during the blend so the motion stays continuous)
 const director = { cur: null, prev: null, blendStart: 0 };
 
-// easeInOutCubic: khởi động chậm, lướt nhanh ở giữa, hạ cánh êm
+// easeInOutCubic: slow start, fast middle, soft landing
 const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
-// Mỗi shot có thời lượng ngẫu nhiên trong [camMinShot, camMaxShot] → nhịp chuyển không đều, không spam
+// Each shot gets a random duration in [camMinShot, camMaxShot] -> irregular pacing, no spam
 function startShot(now) {
     const names = Object.keys(CAMERA_SHOTS).filter(n => n !== director.cur?.name);
     const shot = {
@@ -83,14 +83,14 @@ function startShot(now) {
         state: {}
     };
     CAMERA_SHOTS[shot.name].setup(shot.state);
-    director.prev = director.cur; // null ở lần đầu → không blend
+    director.prev = director.cur; // null the first time -> no blend
     director.cur = shot;
     director.blendStart = now;
 }
 
 const evalShot = (shot, now, out) => CAMERA_SHOTS[shot.name].update(now - shot.start, shot.state, out);
 
-// Gọi mỗi khung hình. Trả về độ "đang di chuyển" 0–1 (đỉnh ở giữa quá trình chuyển) để renderer làm motion blur
+// Called every frame. Returns how much the camera is "moving" 0-1 (peaks mid-transition) for the motion blur
 function updateCameraDirector(intensity) {
     const now = performance.now() / 1000;
     const cur = director.cur;
@@ -110,13 +110,13 @@ function updateCameraDirector(intensity) {
         const e = easeInOut(blendT);
         _curPose.pos.lerpVectors(_prevPose.pos, _curPose.pos, e);
         _curPose.target.lerpVectors(_prevPose.target, _curPose.target, e);
-        // Hai góc ở 2 phía đối diện → đường lerp xuyên qua điểm nhìn làm camera lật; đẩy ra giữ khoảng cách tối thiểu
+        // Shots on opposite sides make the lerp pass through the target and flip the camera; push out to a minimum distance
         _lookAt.subVectors(_curPose.pos, _curPose.target);
         if (_lookAt.length() < MIN_BLEND_DISTANCE) {
             if (_lookAt.lengthSq() < 1e-6) _lookAt.set(0, 1, 0);
             _curPose.pos.copy(_curPose.target).add(_lookAt.setLength(MIN_BLEND_DISTANCE));
         }
-        moving = Math.sin(blendT * Math.PI); // 0 → 1 → 0
+        moving = Math.sin(blendT * Math.PI); // 0 -> 1 -> 0
     } else {
         director.prev = null;
     }
@@ -124,7 +124,7 @@ function updateCameraDirector(intensity) {
     camera.position.copy(_curPose.pos);
     camera.lookAt(_lookAt.copy(_curPose.target));
 
-    // Rung máy theo kick — cộng sau cùng nên không bị trôi dồn qua các khung
+    // Kick shake - added last so it never accumulates across frames
     if (intensity > 0.5) {
         camera.position.x += (Math.random() - 0.5) * intensity;
         camera.position.y += (Math.random() - 0.5) * intensity;

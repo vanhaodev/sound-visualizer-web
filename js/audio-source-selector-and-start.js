@@ -1,13 +1,13 @@
-// UI màn hình bắt đầu: nạp ảnh, chọn nguồn âm thanh (share / mic / file), khởi động visualizer
+// Start screen: pick the audio source (share / mic / file) and boot the visualizer
 
 const $ = (id) => document.getElementById(id);
 const srcRadio = (value) => document.querySelector(`input[name="src"][value="${value}"]`);
 const getSrc = () => document.querySelector('input[name="src"]:checked').value;
 
-// Firefox không trả audio qua getDisplayMedia → khoá lựa chọn "share" và mặc định sang file
+// Firefox returns no audio track from getDisplayMedia -> lock the "share" option and default to file
 const canShareAudio = !/firefox/i.test(navigator.userAgent) && !!navigator.mediaDevices?.getDisplayMedia;
 
-// Tắt xử lý giọng nói để giữ nguyên dải bass khi dùng micro / Stereo Mix
+// Disable voice processing so the bass band survives when using a mic / Stereo Mix
 const RAW_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
 
 let audioFile = null;
@@ -19,26 +19,15 @@ if (!canShareAudio) {
 }
 srcRadio(canShareAudio ? 'share' : 'file').checked = true;
 
-// Bật nút khi đã có ảnh, và đã có file nếu chọn nguồn "file"
+// Enabled unless the "file" source is picked without a file
 function updateStartBtn() {
-    const ready = textures.length > 0 && (getSrc() !== 'file' || audioFile);
-    $('btn-start').disabled = !ready;
+    $('btn-start').disabled = getSrc() === 'file' && !audioFile;
 }
 
 document.querySelectorAll('input[name="src"]').forEach(r => r.onchange = updateStartBtn);
-// Bấm ô "FILE" → mở hộp chọn file ngay
+// Clicking the "FILE" option opens the file picker right away
 srcRadio('file').onclick = () => $('f-audio').click();
-
-// Nạp ảnh làm Texture
-$('f-img').onchange = (e) => {
-    const loader = new THREE.TextureLoader();
-    Array.from(e.target.files).forEach(f => {
-        loader.load(URL.createObjectURL(f), (txt) => {
-            textures.push(txt);
-            updateStartBtn();
-        });
-    });
-};
+updateStartBtn();
 
 $('f-audio').onchange = (e) => {
     audioFile = e.target.files[0] || null;
@@ -55,7 +44,7 @@ async function getShareStream() {
         stream.getTracks().forEach(t => t.stop());
         throw new Error('No audio track: "Share system audio" was not checked.');
     }
-    stream.getVideoTracks().forEach(t => t.stop()); // chỉ cần audio
+    stream.getVideoTracks().forEach(t => t.stop()); // only the audio is needed
     return stream;
 }
 
@@ -67,37 +56,37 @@ const ERROR_TIPS = {
 
 let audioCtx = null;
 
-// Phải gọi đồng bộ trong click (trước mọi await), nếu không trình duyệt chặn autoplay
-// khi phải chờ tải file lâu
+// Must run synchronously inside the click handler (before any await), otherwise the browser's
+// autoplay policy blocks playback after a long download
 function unlockAudioContext() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     audioCtx.resume();
     return audioCtx;
 }
 
-// Khởi động âm thanh + scene. src: 'share' | 'mic' | 'file' (audioUrl bắt buộc khi 'file').
-// Ném lỗi ra ngoài để nơi gọi tự hiển thị thông báo phù hợp.
+// Boot audio + scene. src: 'share' | 'mic' | 'file' (audioUrl required for 'file').
+// Throws so the caller can show a fitting message.
 async function startVisualizer(src, audioUrl) {
     unlockAudioContext();
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 2048;              // ~23Hz/ngăn → tách được dải bass thật (20–150Hz)
-    analyser.smoothingTimeConstant = 0.5; // ít làm mượt hơn → kick bật nhanh, gọn
+    analyser.fftSize = 2048;              // ~23Hz per bin -> isolates the real bass band (20-150Hz)
+    analyser.smoothingTimeConstant = 0.5; // less smoothing -> kicks hit fast and tight
     analyser.minDecibels = -90;
-    analyser.maxDecibels = -10;           // nới đỉnh để nhạc to và nhỏ khác biệt rõ
+    analyser.maxDecibels = -10;           // more headroom so loud and quiet music read differently
 
     if (src === 'file') {
         const audioEl = new Audio(audioUrl);
         audioEl.loop = true;
         source = audioCtx.createMediaElementSource(audioEl);
         source.connect(analyser);
-        analyser.connect(audioCtx.destination); // để nghe được nhạc
+        analyser.connect(audioCtx.destination); // so the music is audible
         await audioEl.play();
     } else {
         const stream = src === 'share'
             ? await getShareStream()
             : await navigator.mediaDevices.getUserMedia({ audio: RAW_AUDIO, video: false });
         source = audioCtx.createMediaStreamSource(stream);
-        source.connect(analyser); // không nối ra loa để tránh vọng tiếng
+        source.connect(analyser); // not routed to speakers to avoid echo
     }
     if (audioCtx.state === 'suspended') await audioCtx.resume();
     dataArray = new Uint8Array(analyser.frequencyBinCount);

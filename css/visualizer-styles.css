@@ -19,9 +19,15 @@ body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New'
 .btn:hover:not(:disabled) { background: #00ff41; color: #000; }
 .btn:disabled { opacity: 0.2; }
 input[type="file"] { display: none; }
-.label-file { display: block; padding: 15px; border: 1px dashed #00ff41; cursor: pointer; }
 
-/* Chọn nguồn âm thanh */
+/* Lightning flash above the 3D canvas: "screen" adds light onto the scene, never blocks the mouse */
+#flash-layer {
+    position: fixed; inset: 0; z-index: 9;
+    pointer-events: none; mix-blend-mode: screen;
+    background: #9ed8ff; opacity: 0;
+}
+
+/* Audio source picker */
 .src-title { margin: 20px 0 8px; font-size: 12px; letter-spacing: 3px; opacity: 0.8; text-align: left; }
 .src-opt {
     display: block; text-align: left; padding: 10px 12px; margin-top: 6px;
@@ -32,12 +38,16 @@ input[type="file"] { display: none; }
 .src-opt:has(input:checked) { border-color: #00ff41; background: #00ff4115; }
 .src-opt.disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* Panel template bên phải */
+/* Footer pinned to the bottom of the start screen (hidden together with it once the visualizer starts) */
+.home-footer {
+    position: absolute; left: 0; right: 0; bottom: 16px;
+    text-align: center; font-size: 12px; letter-spacing: 2px; color: #00ff41; opacity: 0.6;
+}
+.home-footer a { color: inherit; font-weight: bold; text-decoration: none; }
+.home-footer a:hover { text-decoration: underline; opacity: 1; }
+
+/* Template panel on the right */
 .template-panel { width: 240px; }
 .template-panel .src-title { margin-top: 0; }
-.template-cover {
-    display: block; width: 100%; aspect-ratio: 1; object-fit: cover;
-    border: 1px solid #00ff4155;
-}
 .template-title { margin-top: 12px; font-weight: bold; letter-spacing: 2px; }
 .template-hint { display: block; margin-top: 6px; font-size: 11px; opacity: 0.6; }
