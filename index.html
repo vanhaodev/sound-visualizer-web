@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Sphere Asteroid Visualizer</title>
+    <link rel="stylesheet" href="css/visualizer-styles.css">
+</head>
+<body>
+
+    <div id="ui">
+        <div class="box">
+            <h1>ASTEROID 3D</h1>
+            <label class="label-file">
+                [ SELECT PLANET IMAGES ]
+                <input type="file" id="f-img" accept="image/*" multiple>
+            </label>
+
+            <div class="src-title">AUDIO SOURCE</div>
+            <label class="src-opt" id="opt-share">
+                <input type="radio" name="src" value="share">SHARE SYSTEM AUDIO
+                <small id="share-hint">Music playing on your computer. Remember to check "Share system audio"</small>
+            </label>
+            <label class="src-opt">
+                <input type="radio" name="src" value="mic">MICROPHONE / STEREO MIX
+                <small>Capture via microphone, or pick the "Stereo Mix" device</small>
+            </label>
+            <label class="src-opt">
+                <input type="radio" name="src" value="file">AUDIO FILE
+                <small id="audio-label">Click to pick an audio file</small>
+                <input type="file" id="f-audio" accept="audio/*">
+            </label>
+
+            <button id="btn-start" class="btn" disabled>ACTIVATE SYSTEM</button>
+        </div>
+
+        <div class="box template-panel">
+            <div class="src-title">TEMPLATE</div>
+            <img id="template-cover" class="template-cover" alt="Template cover">
+            <div id="template-title" class="template-title"></div>
+            <small id="template-hint" class="template-hint">Bundled track + image, one click</small>
+            <button id="btn-template" class="btn">▶ PLAY TEMPLATE</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Thứ tự quan trọng: config/state → scene → animation → UI khởi động -->
+    <script src="js/visualizer-config-and-state.js"></script>
+    <script src="js/three-scene-setup.js"></script>
+    <script src="js/motion-trail-renderer.js"></script>
+    <script src="js/camera-director-shots.js"></script>
+    <script src="js/visualizer-animation-loop.js"></script>
+    <script src="js/audio-source-selector-and-start.js"></script>
+    <script src="js/template-preset-player.js"></script>
+</body>
+</html>
