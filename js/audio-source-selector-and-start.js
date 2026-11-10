@@ -119,7 +119,6 @@ async function startVisualizer(src, audioUrl) {
             : await navigator.mediaDevices.getUserMedia({ audio: RAW_AUDIO, video: false });
         source = audioCtx.createMediaStreamSource(stream);
         source.connect(analyser);
-        useAutoGain = true;
         // Not routed to the speakers (echo), but still pull the graph through a silent gain to the
         // destination so Chromium keeps processing the stream -> analyser gets real data, not zeros
         const mute = audioCtx.createGain();

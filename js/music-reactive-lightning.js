@@ -9,8 +9,8 @@
 // Exposes window.lightningFx = { update(dt, kick, high, bass, flow), render() }.
 
 // ?v= must match the asset version in index.html (cache busting, see README "Deployment")
-import { zigzag3D, sproutBranch3D } from "./lightning-bolt-geometry-3d.js?v=2";
-import { pickStartLetter, pickNextLetter, zapLetter, updateZappedLetters } from "./lightning-letter-targets.js?v=2";
+import { zigzag3D, sproutBranch3D } from "./lightning-bolt-geometry-3d.js?v=5";
+import { pickStartLetter, pickNextLetter, zapLetter, updateZappedLetters } from "./lightning-letter-targets.js?v=5";
 
 const PIXEL_H = 240;        // 'pixel' style: vertical resolution of the lightning layer (lower = chunkier pixels)
 const RADIAL_SEGS = 5;      // sides of the tube that forms an arc's core

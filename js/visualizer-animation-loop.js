@@ -26,7 +26,8 @@ function computeIntensity(lowEnd) {
     return pulse;
 }
 
-// Auto gain for shared/mic audio, whose level is often far below a played file (system/app volume,
+// Auto gain for every source, so the same song looks the same from a file or from shared/mic audio
+// (each path reaches the analyser at a different level: file mastering, system/app volume,
 // loopback level). Byte bins are dB-scaled, so a gain is an added offset: lift the recent bass peak
 // up to CONFIG.autoGainTarget, capped at CONFIG.autoGainMax so near-silence is not blown up into noise.
 let bassPeak = 0, agcLogTimer = 0;
@@ -52,7 +53,7 @@ function animate() {
 
     analyser.getByteFrequencyData(dataArray);
     const rawBass = getBandLevel(20, CONFIG.bassMaxHz);
-    const boost = useAutoGain ? updateAutoGain(rawBass, dt) : 0;
+    const boost = updateAutoGain(rawBass, dt);
     const intensity = computeIntensity(Math.min(255, rawBass + boost));
     const high = Math.min(255, getBandLevel(CONFIG.highMinHz, CONFIG.highMaxHz) + boost) / 255;
 
