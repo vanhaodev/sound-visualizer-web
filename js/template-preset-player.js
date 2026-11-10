@@ -1,13 +1,14 @@
-// Right-hand panel: one-click play of the bundled track in static/, no file picking.
-// To change the track, just overwrite static/sample_song.mp3 - no code changes needed
+// Right-hand panel: pick one of the bundled tracks in static/ and play it in one click, no file picking.
+// To change a track, just overwrite its mp3 (same file name) - no code changes needed; add a row to add a track
 
-const TEMPLATE = {
-    title: 'Sample Song',
-    audio: 'static/sample_song.mp3'
-};
+const TEMPLATES = [
+    { title: 'Sample Song 1', audio: 'static/sample_song.mp3' },
+    { title: 'Sample Song 2', audio: 'static/sample_song_2.mp3' }
+];
 
 const templateBtn = $('btn-template');
-$('template-title').textContent = TEMPLATE.title;
+const templateSelect = $('template-select');
+TEMPLATES.forEach((t, i) => templateSelect.add(new Option(t.title, i)));
 
 // Over file:// ES modules and the analyser are blocked (CORS) -> a local server is required
 if (location.protocol === 'file:') {
@@ -28,7 +29,7 @@ templateBtn.onclick = async () => {
     templateBtn.disabled = true;
     templateBtn.textContent = 'LOADING...';
     try {
-        await startVisualizer('file', await fetchAsBlobUrl(TEMPLATE.audio));
+        await startVisualizer('file', await fetchAsBlobUrl(TEMPLATES[templateSelect.value].audio));
     } catch (e) {
         console.error(e);
         alert('Could not play the template!\n' + e.message);

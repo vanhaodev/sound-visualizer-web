@@ -28,9 +28,11 @@ npm start          # or double-click start-visualizer.cmd on Windows
 
 Then open http://localhost:5173. Requires Node.js; there are no dependencies to install.
 
-## Change the template track
+## Change the template tracks
 
-Replace `static/sample_song.mp3` with any mp3 using the same file name. No code changes needed.
+The template panel has a dropdown of bundled tracks. Replace `static/sample_song.mp3` or
+`static/sample_song_2.mp3` with any mp3 using the same file name - no code changes needed.
+To add more, drop an mp3 into `static/` and add a row to `TEMPLATES` in `js/template-preset-player.js`.
 
 ## Tweak it
 
@@ -49,7 +51,7 @@ index.html                              start screen + script loading order
 css/visualizer-styles.css               UI styles
 js/visualizer-config-and-state.js       CONFIG + shared state
 js/audio-source-selector-and-start.js   audio sources, analyser setup, start
-js/template-preset-player.js            one-click template track
+js/template-preset-player.js            template track dropdown + one-click play
 js/visualizer-animation-loop.js         beat detection + render loop
 js/three-scene-setup.js                 Matrix rain scene
 js/camera-director-shots.js             camera shots and transitions
@@ -63,4 +65,4 @@ serve-visualizer-locally.js             tiny local static server
 ## Credits
 
 Made by [vanhaodev](https://github.com/vanhaodev). Built with [three.js](https://threejs.org/) r128.
-The sample track is included for demo purposes only, see `static/readme.txt`.
+The sample tracks are included for demo purposes only, see `static/readme.txt`.

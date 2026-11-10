@@ -4,8 +4,26 @@ const $ = (id) => document.getElementById(id);
 const srcRadio = (value) => document.querySelector(`input[name="src"][value="${value}"]`);
 const getSrc = () => document.querySelector('input[name="src"]:checked').value;
 
-// Firefox returns no audio track from getDisplayMedia -> lock the "share" option and default to file
-const canShareAudio = !/firefox/i.test(navigator.userAgent) && !!navigator.mediaDevices?.getDisplayMedia;
+// Unrestricted build of this site, offered when the current host blocks sharing
+const FULL_VERSION_URL = 'https://vanhaodev.github.io/sound-visualizer-web/';
+
+// Why screen/audio sharing is unavailable here: { reason, byHost } or null if it is available.
+// byHost = the hosting setup blocks it (another host would work), as opposed to a real browser limit.
+function getShareBlock() {
+    if (!window.isSecureContext) return { reason: 'Needs HTTPS - open this page over https://', byHost: true };
+    // Sandboxed page (CSP "sandbox" or a sandboxed iframe without allow-same-origin): the origin is opaque and
+    // Chromium rejects getDisplayMedia with "SecurityError: Invalid security origin"
+    if (window.origin === 'null') return { reason: 'Blocked: this host runs the page in a sandbox (no origin)', byHost: true };
+    const policy = document.permissionsPolicy || document.featurePolicy; // Chromium only
+    if (policy && !policy.allowsFeature('display-capture')) {
+        return { reason: 'Blocked by the host (Permissions-Policy: display-capture)', byHost: true };
+    }
+    if (/firefox/i.test(navigator.userAgent)) return { reason: 'Firefox cannot share system audio (use Chrome/Edge)', byHost: false };
+    if (!navigator.mediaDevices?.getDisplayMedia) return { reason: 'Not supported in this browser (use Chrome/Edge)', byHost: false };
+    return null;
+}
+const shareBlock = getShareBlock();
+const canShareAudio = !shareBlock;
 
 // Disable voice processing so the bass band survives when using a mic / Stereo Mix
 const RAW_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
@@ -15,7 +33,15 @@ let audioFile = null;
 if (!canShareAudio) {
     $('opt-share').classList.add('disabled');
     srcRadio('share').disabled = true;
-    $('share-hint').textContent = 'Not supported in this browser (use Chrome/Edge)';
+    $('share-hint').textContent = shareBlock.reason;
+    console.warn('Share system audio unavailable:', shareBlock.reason);
+    // Hosting problem (not the browser) -> offer the GitHub Pages build, where sharing works
+    if (shareBlock.byHost) {
+        const link = Object.assign(document.createElement('a'), {
+            href: FULL_VERSION_URL, target: '_blank', rel: 'noopener', textContent: ' Open the full version ↗'
+        });
+        $('share-hint').append(link);
+    }
 }
 srcRadio(canShareAudio ? 'share' : 'file').checked = true;
 
