@@ -6,6 +6,9 @@ const CONFIG = {
     bassMaxHz: 150,          // Upper edge of the bass band (lower = only kick/sub)
     bassThreshold: 180,      // Noise gate (0-255): bass below this counts as silence
     pulseRelease: 0.9,       // How slowly a beat fades out (0-1, higher = slower)
+    autoGainTarget: 235,     // Share/mic only: lift the recent bass peak up to this level (0-255)...
+    autoGainMax: 90,         // ...by at most this much (~28 dB), so near-silence stays silent
+    autoGainDecay: 6,        // How fast the remembered peak drops per second (lower = steadier gain)
 
     // Lightning: chains that jump from character to character (x -> y -> j -> k), pulsing with the beat
     lightningStyle: 'hd',    // 'hd' = sharp, full resolution | 'pixel' = chunky pixel-art look
@@ -41,3 +44,4 @@ const CONFIG = {
 let scene, camera, renderer, analyser, dataArray, source;
 let matrixChars = [];
 let isStarted = false;
+let useAutoGain = false; // true for share/mic sources (set on start), files play at a known level

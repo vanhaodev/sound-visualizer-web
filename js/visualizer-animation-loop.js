@@ -26,6 +26,21 @@ function computeIntensity(lowEnd) {
     return pulse;
 }
 
+// Auto gain for shared/mic audio, whose level is often far below a played file (system/app volume,
+// loopback level). Byte bins are dB-scaled, so a gain is an added offset: lift the recent bass peak
+// up to CONFIG.autoGainTarget, capped at CONFIG.autoGainMax so near-silence is not blown up into noise.
+let bassPeak = 0, agcLogTimer = 0;
+function updateAutoGain(rawBass, dt) {
+    bassPeak = Math.max(rawBass, bassPeak - CONFIG.autoGainDecay * dt); // fast attack, slow release
+    const boost = Math.min(CONFIG.autoGainMax, Math.max(0, CONFIG.autoGainTarget - bassPeak));
+    agcLogTimer -= dt;
+    if (agcLogTimer <= 0) { // light diagnostics: shows if any audio reaches the analyser at all
+        agcLogTimer = 3;
+        console.info(`bass raw=${rawBass.toFixed(0)} peak=${bassPeak.toFixed(0)} boost=+${boost.toFixed(0)}`);
+    }
+    return boost;
+}
+
 // Render loop: read the spectrum -> camera, Matrix rain, lightning
 function animate() {
     if (!isStarted) return;
@@ -36,8 +51,10 @@ function animate() {
     lastFrameTime = now;
 
     analyser.getByteFrequencyData(dataArray);
-    const intensity = computeIntensity(getBandLevel(20, CONFIG.bassMaxHz));
-    const high = getBandLevel(CONFIG.highMinHz, CONFIG.highMaxHz) / 255;
+    const rawBass = getBandLevel(20, CONFIG.bassMaxHz);
+    const boost = useAutoGain ? updateAutoGain(rawBass, dt) : 0;
+    const intensity = computeIntensity(Math.min(255, rawBass + boost));
+    const high = Math.min(255, getBandLevel(CONFIG.highMinHz, CONFIG.highMaxHz) + boost) / 255;
 
     // World flow along +z, faster with the low end (per-second rate = old per-frame rate at 60 fps).
     // Shared by the Matrix characters and the lightning so both stay in one frame of reference

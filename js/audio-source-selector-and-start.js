@@ -70,7 +70,13 @@ async function getShareStream() {
         stream.getTracks().forEach(t => t.stop());
         throw new Error('No audio track: "Share system audio" was not checked.');
     }
-    stream.getVideoTracks().forEach(t => t.stop()); // only the audio is needed
+    // Only the audio is needed, but do NOT stop the video track: in Chrome stopping it ends the whole
+    // capture session, so the audio track goes silent/ended right away. Disabling it just drops the frames.
+    stream.getVideoTracks().forEach(t => { t.enabled = false; });
+    const audioTrack = stream.getAudioTracks()[0];
+    console.info('Share audio track:', audioTrack.label, audioTrack.readyState, audioTrack.getSettings());
+    audioTrack.onended = () => console.warn('Shared audio track ended (sharing stopped)');
+    audioTrack.onmute = () => console.warn('Shared audio track muted (no audio coming in)');
     return stream;
 }
 
@@ -112,7 +118,13 @@ async function startVisualizer(src, audioUrl) {
             ? await getShareStream()
             : await navigator.mediaDevices.getUserMedia({ audio: RAW_AUDIO, video: false });
         source = audioCtx.createMediaStreamSource(stream);
-        source.connect(analyser); // not routed to speakers to avoid echo
+        source.connect(analyser);
+        useAutoGain = true;
+        // Not routed to the speakers (echo), but still pull the graph through a silent gain to the
+        // destination so Chromium keeps processing the stream -> analyser gets real data, not zeros
+        const mute = audioCtx.createGain();
+        mute.gain.value = 0;
+        analyser.connect(mute).connect(audioCtx.destination);
     }
     if (audioCtx.state === 'suspended') await audioCtx.resume();
     dataArray = new Uint8Array(analyser.frequencyBinCount);
