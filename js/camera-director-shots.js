@@ -205,19 +205,26 @@ function updateCameraDirector(intensity) {
 // - beat thud: on each kick (rising edge of the kick envelope) the camera drops and bounces back a few times,
 //   dying out - a heavy hit, deeper for harder kicks (CONFIG.shakeBeat)
 // - kick jitter: a small quick shake of the aim while the kick is loud (CONFIG.shakeKick)
-const BEAT_ON = 0.45; // kick envelope that counts as a beat
-let thudAge = 99, thudPower = 0, lastShake = 0, prevKick = 0;
+// kick envelope that counts as a beat: low on purpose - the thud's depth already scales with the kick, so a quiet
+// verse gets soft thuds and the chorus heavy ones (the song's dynamics), instead of a quiet part with none at all
+const BEAT_ON = () => CONFIG.beatThreshold;
+// one kick = one thud: a kick hovering around BEAT_ON would otherwise fire twice within a few frames, so the next
+// beat needs the envelope to drop below BEAT_REARM first, and at least BEAT_MIN_GAP seconds (240 BPM).
+// (BEAT_REARM stays under the lowest sensible CONFIG.beatThreshold)
+const BEAT_REARM = 0.15, BEAT_MIN_GAP = 0.25;
+let thudAge = 99, thudPower = 0, lastShake = 0, beatArmed = true;
 const _shakeDir = new THREE.Vector3();
 function giantShake(intensity, pos, target) {
     const now = performance.now() / 1000, dist = pos.distanceTo(target);
     thudAge += Math.min(0.1, now - (lastShake || now)); // real frame time: same bounce at 60 or 144 Hz
     lastShake = now;
-    if (intensity > BEAT_ON && prevKick <= BEAT_ON) {                                      // a new beat
+    if (intensity < BEAT_REARM) beatArmed = true;
+    if (beatArmed && intensity > BEAT_ON() && thudAge > BEAT_MIN_GAP) {                      // a new beat
+        beatArmed = false;
         thudAge = 0; thudPower = intensity;
         // the sky lightning strikes exactly on this thud (music-reactive-lightning.js)
         window.dispatchEvent(new CustomEvent('camerathud', { detail: { power: intensity } }));
     }
-    prevKick = intensity;
     // damped bounce: down first, ~6 Hz, gone in ~0.6 s (fits between beats up to ~100 BPM)
     const bounce = -Math.exp(-thudAge * 7) * Math.cos(thudAge * 38) * thudPower;
     const dy = bounce * 0.012 * dist * CONFIG.shakeBeat;

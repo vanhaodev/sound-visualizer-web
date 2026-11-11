@@ -102,6 +102,7 @@ async function startVisualizer(src, audioUrl) {
     analyser.maxDecibels = -10;           // more headroom so loud and quiet music read differently
 
     if (src === 'file') {
+        calibrateFileGain(audioUrl); // runs in the background: one constant gain for the whole song
         const audioEl = new Audio(audioUrl);
         audioEl.loop = true;
         source = audioCtx.createMediaElementSource(audioEl);

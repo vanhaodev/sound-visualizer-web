@@ -3,6 +3,9 @@ const CONFIG = {
     starCount: 600,          // Number of floating stars
 
     // Bass beat detector
+    beatThreshold: 0.25,     // Kick strength (0-1) that counts as a beat for the camera thud and the mode 2
+                             // lightning: raise it (0.35-0.45) if soft low notes still shake, lower it for more hits
+    kickMinHz: 35,          // Lower edge of the kick/bass band (skips sub-bass rumble below it)
     bassMaxHz: 150,          // Upper edge of the bass band (lower = only kick/sub)
     bassThreshold: 180,      // Noise gate (0-255): bass below this counts as silence
     pulseRelease: 0.9,       // How slowly a beat fades out (0-1, higher = slower)

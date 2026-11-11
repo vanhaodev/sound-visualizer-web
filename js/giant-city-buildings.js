@@ -91,10 +91,11 @@ void main() {
 
 let shared = null;
 
-// Spectrum -> BANDS bar levels 0-1, measured as how far each band rises above its OWN running average
-// (so treble bands, always quieter in bytes than the bass, behave like the bass): a band at its usual level
-// fills ~1/3 of its tower, only clearly louder moments reach the top. The peak is remembered for a few seconds
-// (otherwise steady music becomes "the loudest so far" and every tower stays full). Fast rise, smooth fall.
+// Spectrum -> BANDS bar levels 0-1, measured against each band's OWN long-term level (so treble bands, always
+// quieter in bytes than the bass, behave like the bass): a band at its usual level fills ~1/3 of its tower, only
+// clearly louder moments reach the top. Average and peak are remembered for ~10-20 s, so the song's dynamics show:
+// a quiet verse keeps low towers, the chorus lights them up (a short memory would make every part look equally
+// busy, flattening the song). Fast rise, smooth fall.
 const bandAvgs = new Float32Array(BANDS).fill(100), bandPeaks = new Float32Array(BANDS).fill(140);
 const BASE_BELOW_AVG = 12; // bytes under the average where a bar starts (a quiet dip -> almost empty)
 function updateBands(dt) {
@@ -105,9 +106,9 @@ function updateBands(dt) {
         let sum = 0;
         for (let i = lo; i <= hi; i++) sum += dataArray[i];
         const v = sum / (hi - lo + 1);
-        bandAvgs[b] += (v - bandAvgs[b]) * Math.min(1, dt * 0.6);                    // ~1.5 s running average
+        bandAvgs[b] += (v - bandAvgs[b]) * Math.min(1, dt * 0.08);                   // ~12 s running average
         const base = bandAvgs[b] - BASE_BELOW_AVG;
-        bandPeaks[b] = Math.max(v, base + 40, bandPeaks[b] - 6 * dt);               // slow fall; at least 40 above base
+        bandPeaks[b] = Math.max(v, base + 40, bandPeaks[b] - 1.5 * dt);             // slow fall; at least 40 above base
         const rel = Math.min(1, Math.max(0, (v - base) / (bandPeaks[b] - base)));
         const target = Math.pow(rel, 1.4) * CONFIG.cityBarGain;                     // curve: keeps the top for real peaks
         bandLevels[b] = target > bandLevels[b] ? target : bandLevels[b] + (target - bandLevels[b]) * Math.min(1, dt * 9);

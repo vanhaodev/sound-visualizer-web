@@ -4,46 +4,64 @@ let pulse = 0;         // 0-1 envelope: jumps up on a kick, fades out by pulseRe
 let bassLoudness = 0;  // 0-1 current bass level above the noise gate (sustained, not just the kick spike)
 let lastFrameTime = 0;
 
-// Average level (0-255) of the [fromHz, toHz] band; skips bin 0 (DC). Call after getByteFrequencyData
-function getBandLevel(fromHz, toHz) {
-    const binHz = analyser.context.sampleRate / analyser.fftSize;
+// Average level (0-255) of the [fromHz, toHz] band of a byte spectrum; skips bin 0 (DC)
+function bandLevelOf(data, binHz, fromHz, toHz) {
     const a = Math.max(1, Math.round(fromHz / binHz));
-    const b = Math.min(dataArray.length - 1, Math.max(a + 1, Math.round(toHz / binHz)));
+    const b = Math.min(data.length - 1, Math.max(a + 1, Math.round(toHz / binHz)));
     let sum = 0;
-    for (let i = a; i <= b; i++) sum += dataArray[i];
+    for (let i = a; i <= b; i++) sum += data[i];
     return sum / (b - a + 1);
 }
+// Same on the live analyser. Call after getByteFrequencyData
+const getBandLevel = (fromHz, toHz) =>
+    bandLevelOf(dataArray, analyser.context.sampleRate / analyser.fftSize, fromHz, toHz);
 
-// Volume-aware kick strength 0-1: quiet sound under the gate = 0, loud and sudden kick = strongest
+// Kick strength 0-1: needs BOTH a loud low end (over the gate) AND a sudden jump above its recent level.
+// Loud but steady bass (a held bass note, a pad, room rumble) has no jump -> no kick; it still drives the
+// sustained effects through bassLoudness
 function computeIntensity(lowEnd) {
     const loudness = Math.max(0, lowEnd - CONFIG.bassThreshold) / (255 - CONFIG.bassThreshold);
     bassLoudness = loudness;
     const punch = Math.min(1, Math.max(0, lowEnd - bassAvg) / 40); // how far it jumps above the recent level
     bassAvg += (lowEnd - bassAvg) * 0.05;
 
-    const target = loudness * (0.4 + 0.6 * punch);
+    const target = loudness * Math.min(1, punch * 1.25);
     pulse = target > pulse ? target : pulse * CONFIG.pulseRelease;
     return pulse;
 }
 
 // Auto gain: getByteFrequencyData maps [minDecibels, maxDecibels] to 0-255, so sliding that window by N dB
 // is an exact N dB gain for every band (thresholds keep working, true silence stays 0).
-// A slow-decaying bass peak is steered toward CONFIG.autoGainTarget in both directions (quiet sources boosted,
-// loud ones cut), so shared audio, mic and file all react the same. Quick in the first seconds, gentle after.
+// The peak of the song's LOUDEST part (bass, or the mids + MID_REF_OFFSET) is steered toward
+// CONFIG.autoGainTarget, so shared audio, mic and file all react the same. Steering by the bass alone would boost
+// a song WITHOUT bass until its leftover low rumble looked like kicks; the mids keep it at its real level.
+// It is a volume calibration, NOT a compressor: a song lives on the contrast between its quiet and loud parts,
+// so it must not even them out. It settles fast on the first seconds of sound, then barely moves: the peak is
+// remembered for ~20-30 s (a quiet verse stays quiet next to the chorus it follows) and the gain only creeps up.
+// The one fast move is a cut when the sound gets louder than ever before (volume turned up: avoid clipping).
+// The peak is tracked in SOURCE dB (the gain removed), so the gain never feeds back into its own measurement:
+// the wanted gain is simply "what brings the remembered peak to the target", approached smoothly.
 const DB_PER_BYTE = 80 / 255;    // the window is 80 dB wide (-90..-10)
-let gainPeak = 0, gainBoostDb = 0, gainTime = 0;
-function updateAutoGain(bassLevel, dt) {
+const MID_REF_OFFSET = 20;       // bytes (~6 dB): in a normal mix the mids sit about this much below the bass
+const GAIN_SETTLE = 6;           // seconds of sound during which the gain may move quickly (initial calibration)
+const PEAK_FALL_DB = 0.5;        // dB per second the remembered peak sinks (10 dB quieter part: ~20 s to follow)
+let peakDb = -Infinity, gainBoostDb = 0, gainTime = 0;
+function updateAutoGain(level, dt) {
+    // A file plays at its mastered level straight into the analyser (no app / Windows volume in between), so it
+    // gets ONE constant gain for the whole song, measured on the whole song beforehand (file-loudness-calibration.js).
+    // Calibrating live on its quiet intro boosted it up to ~40 dB and turned the intro's soft low end into fake kicks
     if (!CONFIG.autoGain) { gainBoostDb = 0; }
-    else {
-        gainPeak = Math.max(bassLevel, gainPeak - 15 * dt);   // ~15 bytes/s decay -> follows the song, not each beat
-        if (gainPeak > 40) {                                   // silence/pause: hold the gain instead of drifting
-            gainTime += dt;
-            const error = CONFIG.autoGainTarget - gainPeak;    // bytes
-            const up = gainTime < 4 ? 1.2 : 0.4;               // settle fast on start, then follow slowly
-            gainBoostDb += error * DB_PER_BYTE * dt * (error > 0 ? up : 1.5); // cut faster: a saturated peak hides detail
-            const max = sourceKind === 'mic' ? CONFIG.autoGainMaxDbMic : CONFIG.autoGainMaxDb;
-            gainBoostDb = Math.min(max, Math.max(-CONFIG.autoGainMaxDb, gainBoostDb));
-        }
+    else if (sourceKind === 'file') { gainBoostDb = typeof fileGainDb === 'number' ? fileGainDb : 0; }
+    else if (level > 40) {                                     // silence/pause: hold the gain instead of drifting
+        gainTime += dt;
+        const srcDb = level * DB_PER_BYTE - 90 - gainBoostDb;  // this frame's level, before any gain
+        peakDb = Math.max(srcDb, peakDb - PEAK_FALL_DB * dt);
+        const max = sourceKind === 'mic' ? CONFIG.autoGainMaxDbMic : CONFIG.autoGainMaxDb;
+        const targetDb = CONFIG.autoGainTarget * DB_PER_BYTE - 90;
+        const want = Math.min(max, Math.max(-CONFIG.autoGainMaxDb, targetDb - peakDb));
+        // louder than ever: cut quickly (no clipping) | first seconds: calibrate | then: almost hold (~20 s)
+        const k = want < gainBoostDb ? 4 : gainTime < GAIN_SETTLE ? 2 : 0.05;
+        gainBoostDb += (want - gainBoostDb) * Math.min(1, dt * k);
     }
     window.audioGainDb = gainBoostDb; // type audioGainDb in the console to see the current boost
     analyser.minDecibels = -90 - gainBoostDb;
@@ -75,8 +93,9 @@ function animate() {
     lastFrameTime = now;
 
     analyser.getByteFrequencyData(dataArray);
-    const bassLevel = getBandLevel(20, CONFIG.bassMaxHz);
-    updateAutoGain(bassLevel, dt); // applies from the next frame
+    const bassLevel = getBandLevel(CONFIG.kickMinHz, CONFIG.bassMaxHz);
+    const midLevel = getBandLevel(250, 2000);
+    updateAutoGain(Math.max(bassLevel, midLevel + MID_REF_OFFSET), dt); // applies from the next frame
     const intensity = computeIntensity(bassLevel);
     const high = getBandLevel(CONFIG.highMinHz, CONFIG.highMaxHz) / 255;
     // Raw mid-band levels (0-255): the lightning detects new vocal/lead notes in them
