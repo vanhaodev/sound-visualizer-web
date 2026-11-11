@@ -14,7 +14,7 @@
 
 // ?v= must match the asset version in index.html (cache busting, see README "Deployment")
 import { zigzag3D, sproutBranch3D } from "./lightning-bolt-geometry-3d.js?v=3";
-import { pickStartStar, pickNextStar, zapStar, updateZappedStars } from "./lightning-star-targets.js?v=3";
+import { pickStartStar, pickNextStar, zapStar, updateZappedStars, anchorScale, chainsRunToEnd, chainsOnBeatOnly } from "./lightning-star-targets.js?v=3";
 import { paletteFor, makeOnsetDetector, detectOnset } from "./lightning-frequency-colors.js?v=3";
 
 const PIXEL_H = 240;        // 'pixel' style: vertical resolution of the lightning layer (lower = chunkier pixels)
@@ -87,20 +87,23 @@ function addPathObjects(b, path) {
 const wrapsOf = (m) => m.userData.wraps || 0;
 
 // An arc between two stars, from their current positions
-function makeArc(from, to, power, band, { jag = 0.22, forks = 0.3 + 0.6 * power, crackle = false } = {}) {
+// single: one clean bolt (few forks, no branches sprouting on sustained bass)
+function makeArc(from, to, power, band, { jag = 0.22, forks = 0.3 + 0.6 * power, crackle = false, single = false } = {}) {
+    if (single) forks = 0.12;
     const a = from.position.clone(), z = to.position.clone();
-    const pal = paletteFor(band);
+    const pal = paletteFor(band), S = anchorScale();
     const b = {
         pal,
         // a star that wraps from z=+50 back to -50 would leave the arc dangling -> remember its wrap count
         ends: [[from, wrapsOf(from)], [to, wrapsOf(to)]],
         group: new THREE.Group(), paths: [], power, crackle, fade: 1, age: 0, restrike: crackle ? 0 : 1,
-        branchTimer: 0, dying: false,
-        size: crackle ? 0.9 : 0.8 + 0.8 * power,
-        outerBase: 1.8 + 2 * power,
+        branchTimer: 0, dying: false, single,
+        // sizes follow the anchor set's world scale (bolts in the mode 2 sky are much bigger than in the starfield)
+        size: (crackle ? 0.9 : 0.8 + 0.8 * power) * S,
+        outerBase: (1.8 + 2 * power) * S,
         coreMat: new THREE.MeshBasicMaterial({ color: pal.core, ...additive }),
-        innerMat: new THREE.PointsMaterial({ color: pal.inner, size: 0.5 + 0.4 * power, map: glowTex, ...additive }),
-        outerMat: new THREE.PointsMaterial({ color: pal.outer, size: 1.8 + 2 * power, map: glowTex, ...additive })
+        innerMat: new THREE.PointsMaterial({ color: pal.inner, size: (0.5 + 0.4 * power) * S, map: glowTex, ...additive }),
+        outerMat: new THREE.PointsMaterial({ color: pal.outer, size: (1.8 + 2 * power) * S, map: glowTex, ...additive })
     };
     zigzag3D(R, a, z, jag, forks).forEach(p => addPathObjects(b, p));
     if (crackle) b.paths.forEach(p => (p.grow = 1));
@@ -125,7 +128,8 @@ function startChain(power, hops, band) {
     if (!start) return null;
     const pal = paletteFor(band);
     strike(start, power, pal);
-    chains.push({ cur: start, used: new Set([start]), hopsLeft: hops, timer: 0, power, band, pal });
+    if (chainsRunToEnd()) hops = 99; // e.g. a vertical strike keeps falling until it hits a roof
+    chains.push({ cur: start, used: new Set([start]), hopsLeft: hops, timer: 0, power, band, pal, single: chainsOnBeatOnly() });
     return start;
 }
 
@@ -135,7 +139,7 @@ function stepChain(c, dt) {
     while (c.timer <= 0 && c.hopsLeft > 0) {
         const next = pickNextStar(c.cur, c.used, CONFIG.hopMinDist, CONFIG.hopMaxDist);
         if (!next) return false;
-        makeArc(c.cur, next, c.power, c.band);
+        makeArc(c.cur, next, c.power, c.band, { single: c.single });
         strike(next, c.power, c.pal);
         c.used.add(next);
         c.cur = next;
@@ -178,7 +182,7 @@ function stepBolt(b, dt, kick, bass, bassOn, flow) {
         }
         if (bassOn && !b.dying && b.age < CONFIG.boltMaxLife) {
             b.fade = Math.min(1, b.fade + dt * 4);
-            if (b.paths[0].grow >= 1 && (b.branchTimer -= dt) <= 0 && b.paths.length < MAX_PATHS) {
+            if (!b.single && b.paths[0].grow >= 1 && (b.branchTimer -= dt) <= 0 && b.paths.length < MAX_PATHS) {
                 sproutBranch3D(R, b.paths[0]).forEach(p => addPathObjects(b, p));
                 b.branchTimer = CONFIG.boltBranchInterval / (0.5 + bass); // louder bass branches faster
             }
@@ -206,6 +210,26 @@ function stepBolt(b, dt, kick, bass, bassOn, flow) {
     return true;
 }
 
+// A kick chain (longer for harder kicks), the live arcs flare up, the screen flashes
+function fireKickChain(kick) {
+    if (chainsOnBeatOnly()) {
+        // one bolt at a time: the previous strike clears out quickly as the new one falls
+        bolts.forEach(b => { b.dying = true; b.fade *= 0.4; });
+        chains = [];
+    }
+    const hops = Math.round(CONFIG.chainHopsMin + kick * (CONFIG.chainHopsMax - CONFIG.chainHopsMin));
+    const star = startChain(kick, hops, 'kick');
+    // other effects (e.g. kick-shockwave-rings.js) react to the strike without being wired into this module
+    if (star) window.dispatchEvent(new CustomEvent('kickstrike', { detail: { star, power: kick } }));
+    bolts.forEach(b => { if (!b.crackle && !b.dying) b.restrike = Math.max(b.restrike, 0.6); });
+    flash = Math.max(flash, kick);
+    chainCooldown = CONFIG.chainCooldown;
+}
+
+// The camera's beat thud (mode 2), consumed by the next update
+let thudPower = 0;
+window.addEventListener('camerathud', (e) => { thudPower = Math.max(thudPower, e.detail.power); });
+
 // kick: 0-1 beat envelope, high: 0-1 treble level, bass: 0-1 sustained bass loudness,
 // flow: how far the stars moved along z this frame (already applied to them),
 // mids: { vocal, lead } raw band levels 0-255
@@ -229,34 +253,32 @@ function update(dt, kick, high, bass, flow, mids = {}) {
         return;
     }
 
-    // Kick on its rising edge -> a chain, longer for harder kicks; live arcs flare up
-    if (kick > CONFIG.chainOnKick && kick > prevKick && chainCooldown <= 0) {
-        const hops = Math.round(CONFIG.chainHopsMin + kick * (CONFIG.chainHopsMax - CONFIG.chainHopsMin));
-        const star = startChain(kick, hops, 'kick');
-        // other effects (e.g. kick-shockwave-rings.js) react to the strike without being wired into this module
-        if (star) window.dispatchEvent(new CustomEvent('kickstrike', { detail: { star, power: kick } }));
-        bolts.forEach(b => { if (!b.crackle && !b.dying) b.restrike = Math.max(b.restrike, 0.6); });
-        flash = Math.max(flash, kick);
-        chainCooldown = CONFIG.chainCooldown;
+    if (chainsOnBeatOnly()) {
+        // this anchor set strikes only together with the camera's beat thud (camera-director-shots.js)
+        if (thudPower > 0) fireKickChain(thudPower);
+    } else {
+        // Kick on its rising edge -> a chain, longer for harder kicks
+        if (kick > CONFIG.chainOnKick && kick > prevKick && chainCooldown <= 0) fireKickChain(kick);
+
+        // Sustained bass -> short chains keep coming, denser with louder bass
+        if (bassOn && bassChainTimer <= 0) {
+            startChain(0.3 + 0.5 * bass, 1 + Math.round(bass * 3), 'bass');
+            bassChainTimer = CONFIG.chainBassInterval / (0.5 + bass);
+        }
+
+        // A new vocal syllable / lead note -> a short chain in that band's color (2-4 hops, longer for a sharper onset)
+        for (const band in midOnsets) {
+            const k = detectOnset(midOnsets[band], mids[band] || 0, dt);
+            if (k > 0) startChain(0.3 + 0.4 * k, 2 + Math.round(k * 2), band);
+        }
+
+        if (high > CONFIG.crackleOnHigh && crackleCooldown <= 0) {
+            spawnCrackle(high);
+            crackleCooldown = 0.12 - 0.08 * Math.min(1, high); // denser treble fires faster
+        }
     }
     prevKick = kick;
-
-    // Sustained bass -> short chains keep coming, denser with louder bass
-    if (bassOn && bassChainTimer <= 0) {
-        startChain(0.3 + 0.5 * bass, 1 + Math.round(bass * 3), 'bass');
-        bassChainTimer = CONFIG.chainBassInterval / (0.5 + bass);
-    }
-
-    // A new vocal syllable / lead note -> a short chain in that band's color (2-4 hops, longer for a sharper onset)
-    for (const band in midOnsets) {
-        const k = detectOnset(midOnsets[band], mids[band] || 0, dt);
-        if (k > 0) startChain(0.3 + 0.4 * k, 2 + Math.round(k * 2), band);
-    }
-
-    if (high > CONFIG.crackleOnHigh && crackleCooldown <= 0) {
-        spawnCrackle(high);
-        crackleCooldown = 0.12 - 0.08 * Math.min(1, high); // denser treble fires faster
-    }
+    thudPower = 0;
 
     chains = chains.filter(c => stepChain(c, dt));
     updateZappedStars(dt);

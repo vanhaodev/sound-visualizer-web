@@ -109,6 +109,7 @@ function animate() {
     if (window.walkerFx) window.walkerFx.update(dt, intensity);
     if (window.cityFx) window.cityFx.update(dt, flow, intensity);
 
+    if (window.modeFx) window.modeFx.update(intensity); // automatic mode switching (N key / "Auto" on the home screen)
     const moving = updateCameraDirector(intensity); // shots + smooth transitions + kick shake
 
     // 3D lightning (ES module, may not be loaded yet on a slow network); drawn inside renderWithMotionTrail

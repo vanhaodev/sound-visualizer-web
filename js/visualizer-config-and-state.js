@@ -68,9 +68,11 @@ const CONFIG = {
     sparkSize: 0.45,         // Spark size
     sparkMax: 3000,          // Pool size (the oldest sparks get recycled beyond this)
 
-    // Visual mode (M key switches while playing):
-    // 1 = free camera tour of the starfield with lightning | 2 = a galactic giant walks through space (no lightning)
-    visualMode: 2,
+    // Visual mode (the home dropdown picks it; M switches while playing, N toggles automatic switching):
+    // 1 = free camera tour of the starfield with lightning | 2 = a galactic giant walks through a city
+    visualMode: 1,
+    autoModeMin: 30,         // Automatic switching: next mode change after a random time between autoModeMin...
+    autoModeMax: 60,         // ...and autoModeMax seconds (then on the next strong kick)
     walkerModel: 'static/models/miss_galaxy.glb', // a GLB with a looping walk animation (in place)
     walkerHeight: 120,       // Her height in world units: a galactic giant (the star cube around the camera is 100
                              // units wide, so the stars read as dust drifting past her)
@@ -102,7 +104,12 @@ const CONFIG = {
                              // (js/giant-city-buildings.js, one draw call however many); 0 = off (whole city)
     cityBarGain: 0.85,       // How high the window "equalizer" can climb (1 = full tower on the loudest peaks;
                              // lower = calmer city)
-    cityGlow: 0.35,          // Light spilling onto the walls around lit windows: turns each bar into one glowing
+    skyLightning: true,      // Mode 2: the mode 1 lightning plays in the sky over the buildings, pinned to the city
+    skyLightningScale: 5,    // Size of those bolts and their hops vs mode 1 (they must read at city scale, far away)
+    skyLightningVertical: true, // Strikes fall from high in the sky down onto real rooftops (false = hop around the sky)
+    skyLightningHeight: [1.2, 2.4],  // Height band of that lightning above the street, in her heights (rooftops ~0.5)
+    skyLightningDistance: [1.2, 3.5], // How far to either side of her path, in her heights (the street ends at 0.7)
+    cityGlow: 0.35,         // Light spilling onto the walls around lit windows: turns each bar into one glowing
                              // column (0 = only the window dots; 0.6+ = neon towers)
     cityWindowSize: 1,       // Window grid scale (1 = 3.5 m floors; 0.5 = twice as many, smaller windows - may
                              // shimmer when far; 1.5 = fewer, bigger)
@@ -120,8 +127,10 @@ const CONFIG = {
     shakeBeat: 1,            // Mode 2: camera thud (drop + bounce) on every beat (0 = off, 2 = heavy)
     shakeKick: 0.5,          // Mode 2: small camera jitter while the kick is loud (0 = off)
     camHoldGiant: 1.5,      // Mode 2 shots last this many times longer (6-12 s -> 9-18 s)
-    trailMoving: 0.8,        // Motion blur trail while the camera glides (0 = off, 0.9 = very long)
-    trailIdle: 0.25          // Trail while the camera is still (light, keeps the image sharp)
+    // Motion blur (afterimage trails, js/motion-trail-renderer.js)
+    motionBlur: 0,          // MASTER: scales both trails below (0 = off, 0.5 = half, 1.2 = longer)
+    trailMoving: 0.8,        // Trail while the camera glides between shots (0 = none, 0.9 = very long)
+    trailIdle: 0.25          // Trail while the camera holds a shot (light, keeps the image sharp)
 };
 
 // State shared across files

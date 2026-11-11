@@ -12,6 +12,7 @@
 
 import { CITY, WRAP_GLSL, FOG_GLSL, makeSharedUniforms } from "./giant-city-layout.js?v=3";
 import { buildStreet } from "./giant-city-street.js?v=3";
+import { buildSkyAnchors, updateSkyAnchors } from "./giant-city-sky-anchors.js?v=3";
 
 // Every building is one bar of a giant equalizer: its windows light up from the ground to a height that follows the
 // level of its frequency band (quiet -> a few floors, loud -> the whole tower). Bands are log-spaced.
@@ -117,6 +118,7 @@ function updateBands(dt) {
 }
 
 let kickUniform = null, kick = 0;
+const roofTops = []; // top-center of every building (layout positions), filled by buildBuildings
 
 function buildBuildings(w) {
     const H = w.height, cell = CITY.cell * H;
@@ -152,7 +154,13 @@ function buildBuildings(w) {
         }
     });
     const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat, count);
-    for (let i = 0; i < count; i++) mesh.setMatrixAt(i, mats[i]);
+    roofTops.length = 0;
+    const p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+    for (let i = 0; i < count; i++) {
+        mesh.setMatrixAt(i, mats[i]);
+        mats[i].decompose(p, q, s);
+        roofTops.push(new THREE.Vector3(p.x, p.y + s.y / 2, p.z)); // where vertical sky lightning can strike
+    }
     return mesh;
 }
 
@@ -162,6 +170,7 @@ function build(w) {
     shared = makeSharedUniforms(w);
     group = new THREE.Group();
     group.add(buildBuildings(w), ...buildStreet(w, shared));
+    buildSkyAnchors(w, shared, roofTops); // the sky lightning's anchor points, pinned to the city
     // everything moves in the shaders, so the CPU-side bounds are wrong: never cull
     group.traverse(o => (o.frustumCulled = false));
     scene.add(group);
@@ -175,6 +184,7 @@ function update(dt, flow, intensity) {
     if (on && !group) build(w);
     if (!group) return;
     group.visible = on;
+    updateSkyAnchors(flow, on, shared.uZMin.value, shared.uLength.value); // also hands them back in mode 1
     if (!on) return;
     shared.uOffset.value += flow;
     shared.uTime.value += dt;

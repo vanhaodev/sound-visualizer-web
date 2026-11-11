@@ -1,4 +1,4 @@
-# Storm 3D - Sound Visualizer
+# Sound Visualizer
 
 A 3D music visualizer in the browser: a twinkling starfield floating in space, a camera that moves with the beat,
 and chain lightning that jumps between the stars in time with the music.
@@ -7,9 +7,9 @@ and chain lightning that jumps between the stars in time with the music.
 
 ## Features
 
-- **Two visual modes** (M key) - mode 1: a camera tour of the starfield with all the lightning effects;
-  mode 2 (default): a galactic giant walks through space in slow motion, filmed like a giant from street level
-  (feet passing by, down the street behind and ahead of her, a slow orbit around her legs); no lightning, she walks down a city street: dark buildings that light up floor by floor like a giant equalizer, faint lane markings
+- **Two visual modes** (home dropdown + Shuffle; M switches, N toggles shuffle; mode 1 by default) - mode 1: a camera tour of the starfield with all the lightning effects;
+  mode 2: a galactic giant walks through space in slow motion, filmed like a giant from street level
+  (feet passing by, down the street behind and ahead of her, a slow orbit around her legs); the lightning plays in the sky over the rooftops, pinned to the city; she walks down a city street: dark buildings that light up floor by floor like a giant equalizer, faint lane markings
   and street lamps (all shader-driven, a handful of draw calls)
 - **Chain lightning** - every kick starts a chain that jumps from star to star;
   harder kicks make longer chains, sustained bass keeps firing and branching, treble makes small crackles
@@ -70,6 +70,7 @@ js/template-preset-player.js            template track dropdown + one-click play
 js/visualizer-animation-loop.js         beat detection + render loop
 js/three-scene-setup.js                 starfield scene
 js/camera-director-shots.js             camera shots and transitions
+js/visual-mode-switcher.js              mode dropdown + shuffle, M / N keys
 js/motion-trail-renderer.js             motion blur (afterimage trails)
 js/music-reactive-lightning.js          chain lightning driven by the music (ES module)
 js/lightning-bolt-geometry-3d.js        3D bolt shapes with forks
@@ -84,6 +85,7 @@ js/deep-space-backdrop.js               optional far-away star shell behind ever
 js/giant-city-buildings.js              optional mode 2 city: dark buildings, windows flickering / flashing on the beat
 js/giant-city-street.js                 mode 2 street: ground + lane markings, street lamps
 js/giant-city-layout.js                 shared city layout + shader helpers (flow/wrap, fog)
+js/giant-city-sky-anchors.js            mode 2 sky lightning anchors, flowing with the city
 static/models/miss_galaxy.glb           the mode 2 model (CC BY 4.0, see Credits)
 serve-visualizer-locally.js             tiny local static server
 ```

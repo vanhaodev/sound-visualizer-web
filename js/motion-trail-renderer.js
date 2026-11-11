@@ -16,7 +16,8 @@ function initMotionTrail() {
 
 // moving: 0-1 (how much the camera is mid-transition). Long trails while gliding, almost none when still
 function renderWithMotionTrail(moving) {
-    const persist = CONFIG.trailIdle + (CONFIG.trailMoving - CONFIG.trailIdle) * moving;
+    // capped below 1: at 1 the old frame would never fade and the screen would smear forever
+    const persist = Math.min(0.95, (CONFIG.trailIdle + (CONFIG.trailMoving - CONFIG.trailIdle) * moving) * CONFIG.motionBlur);
     fadeMaterial.opacity = 1 - persist; // less black cover -> more of the old frame remains
 
     renderer.render(fadeScene, fadeCamera); // fade the old frame

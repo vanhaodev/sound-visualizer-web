@@ -19,7 +19,7 @@ body { margin: 0; background: #000; overflow: hidden; font-family: var(--font); 
 .box {
     background: #000; padding: 30px; border-radius: 10px;
     border: 2px solid var(--green); text-align: center; color: var(--green);
-    width: 350px; box-shadow: 0 0 30px var(--green-glow);
+    width: 420px; max-width: calc(100vw - 32px); box-shadow: 0 0 30px var(--green-glow);
 }
 .box h1 { letter-spacing: 5px; }
 .btn {
@@ -95,3 +95,13 @@ input[type="file"] { display: none; }
 }
 .template-select:focus { outline: 1px solid var(--green); outline-offset: 2px; }
 .template-select option { background: #000; color: var(--green); }
+.template-select:disabled { cursor: not-allowed; border-style: dashed; color: var(--green-dim); }
+
+/* Visual mode: dropdown + shuffle checkbox on one row */
+.mode-row { display: flex; align-items: center; gap: 10px; }
+.mode-row .template-select { flex: 1; margin-top: 0; }
+.mode-shuffle {
+    display: flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap;
+    font-size: 12px; letter-spacing: 2px; color: var(--green);
+}
+.mode-shuffle input { accent-color: var(--green); cursor: pointer; }

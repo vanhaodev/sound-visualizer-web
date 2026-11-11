@@ -28,7 +28,8 @@
         window.pipWindow = pip;
         fitRendererTo(pip);
         pip.addEventListener('resize', () => fitRendererTo(pip));
-        pip.addEventListener('keydown', onKey);
+        // forward keys to the page, so every shortcut (P, Esc, M, N...) also works with the mini window focused
+        pip.addEventListener('keydown', (e) => window.dispatchEvent(new KeyboardEvent('keydown', { key: e.key })));
         // closed by the user (or by close()): bring everything back to the page
         pip.addEventListener('pagehide', () => {
             document.body.prepend(...movable());

@@ -153,13 +153,6 @@ const evalShot = (shot, now, out) => {
     SHOT_SETS[shot.mode].shots[shot.name].update(now - shot.start, shot.state, out);
 };
 
-// M switches visual mode; the camera glides into the new mode's first shot
-window.addEventListener('keydown', (e) => {
-    if ((e.key === 'm' || e.key === 'M') && isStarted) {
-        visualMode = visualMode === 1 ? 2 : 1;
-        startShot(performance.now() / 1000);
-    }
-});
 
 // Called every frame. Returns how much the camera is "moving" 0-1 (peaks mid-transition) for the motion blur
 function updateCameraDirector(intensity) {
@@ -219,7 +212,11 @@ function giantShake(intensity, pos, target) {
     const now = performance.now() / 1000, dist = pos.distanceTo(target);
     thudAge += Math.min(0.1, now - (lastShake || now)); // real frame time: same bounce at 60 or 144 Hz
     lastShake = now;
-    if (intensity > BEAT_ON && prevKick <= BEAT_ON) { thudAge = 0; thudPower = intensity; } // a new beat
+    if (intensity > BEAT_ON && prevKick <= BEAT_ON) {                                      // a new beat
+        thudAge = 0; thudPower = intensity;
+        // the sky lightning strikes exactly on this thud (music-reactive-lightning.js)
+        window.dispatchEvent(new CustomEvent('camerathud', { detail: { power: intensity } }));
+    }
     prevKick = intensity;
     // damped bounce: down first, ~6 Hz, gone in ~0.6 s (fits between beats up to ~100 BPM)
     const bounce = -Math.exp(-thudAge * 7) * Math.cos(thudAge * 38) * thudPower;

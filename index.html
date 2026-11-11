@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Storm Sound Visualizer</title>
+    <title>Sound Visualizer</title>
     <link rel="stylesheet" href="css/visualizer-styles.css?v=3">
 </head>
 <body>
@@ -12,7 +12,7 @@
 
     <div id="ui">
         <div class="box">
-            <h1>STORM 3D</h1>
+            <h1>SOUND VISUALIZER</h1>
 
             <div class="src-title">AUDIO SOURCE</div>
             <label class="src-opt" id="opt-share">
@@ -29,6 +29,18 @@
                 <input type="file" id="f-audio" accept="audio/*">
             </label>
 
+            <div class="src-title">VISUAL MODE</div>
+            <div class="mode-row">
+                <select id="mode-select" class="template-select" aria-label="Visual mode">
+                    <option value="1">Starfield storm</option>
+                    <option value="2">Giant in the city</option>
+                </select>
+                <label class="mode-shuffle" title="Switch between the modes at random (N while playing)">
+                    <input type="checkbox" id="mode-shuffle">SHUFFLE
+                </label>
+            </div>
+            <small class="hint">Also used by the template player. Shuffle starts with the selected mode</small>
+
             <button id="btn-start" class="btn" disabled>ACTIVATE SYSTEM</button>
         </div>
 
@@ -40,7 +52,8 @@
         </div>
 
         <div class="shortcuts">
-            While playing: <kbd>M</kbd> switch mode (1 = starfield tour, 2 = space walk)
+            While playing: <kbd>M</kbd> switch mode (starfield storm / giant in the city)
+            · <kbd>N</kbd> shuffle modes on / off
             · <kbd>Esc</kbd> show / hide controls
             · <kbd>P</kbd> picture-in-picture, keeps playing on top of other apps (Chrome/Edge)
         </div>
@@ -65,6 +78,7 @@
     <script src="js/motion-trail-renderer.js?v=3"></script>
     <script src="js/camera-walker-follow-shots.js?v=3"></script>
     <script src="js/camera-director-shots.js?v=3"></script>
+    <script src="js/visual-mode-switcher.js?v=3"></script>
     <script src="js/visualizer-animation-loop.js?v=3"></script>
     <script src="js/audio-source-selector-and-start.js?v=3"></script>
     <script src="js/template-preset-player.js?v=3"></script>

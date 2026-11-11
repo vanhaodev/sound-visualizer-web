@@ -105,7 +105,8 @@ function update(dt, intensity) {
     const cameraInside = Math.hypot(dx, dz) < 0.2 * w.height
         && camera.position.y > w.anchor.y && camera.position.y < w.anchor.y + w.height;
     root.visible = on && !cameraInside;
-    window.lightningOff = on; // this mode is only her, the city and the far stars
+    // lightning plays in the sky over the city (giant-city-sky-anchors.js); without those anchors, none in this mode
+    window.lightningOff = on && !window.lightningAnchors;
     if (on !== shownMode2) {  // on a mode switch only
         shownMode2 = on;
         // the floating star cube is the lightning's playground: not needed here, and it would hang in the street
