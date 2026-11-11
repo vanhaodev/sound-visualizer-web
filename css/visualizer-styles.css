@@ -41,6 +41,17 @@ input[type="file"] { display: none; }
     background: #9ed8ff; opacity: 0;
 }
 
+/* Picture-in-picture toggle (shown once the visualizer runs) */
+.pip-btn {
+    position: fixed; top: 14px; right: 14px; z-index: 10;
+    width: 38px; height: 38px; border-radius: 8px; cursor: pointer;
+    font: 20px var(--font); color: var(--green);
+    background: #03040dcc; border: 1px solid var(--green-soft);
+    opacity: 0.45; transition: opacity 0.2s;
+}
+.pip-btn:hover { opacity: 1; box-shadow: 0 0 12px var(--green-glow); }
+.pip-btn[hidden] { display: none; }
+
 /* Audio source picker */
 .src-title { margin: 20px 0 8px; font-size: 12px; letter-spacing: 3px; opacity: 0.8; text-align: left; }
 .src-opt {
@@ -61,6 +72,17 @@ input[type="file"] { display: none; }
     text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--green); opacity: 0.6;
 }
 .home-footer a { color: inherit; font-weight: bold; text-decoration: none; }
+
+/* Keyboard shortcuts hint on the home screen, just above the footer */
+.shortcuts {
+    position: absolute; left: 16px; right: 16px; bottom: 44px;
+    text-align: center; font-size: 12px; letter-spacing: 1px; color: var(--green); opacity: 0.75;
+}
+.shortcuts kbd {
+    display: inline-block; padding: 1px 6px; margin: 0 2px;
+    border: 1px solid var(--green-soft); border-radius: 4px; background: var(--green-faint);
+    font: bold 11px var(--font);
+}
 .home-footer a:hover { text-decoration: underline; opacity: 1; }
 
 /* Template panel on the right */

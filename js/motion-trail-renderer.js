@@ -1,4 +1,4 @@
-// Fake motion blur (afterimage): instead of clearing, cover the previous frame with a translucent black quad,
+// Fake motion blur (afterimage): instead of clearing, cover the previous frame with a translucent deep-space quad,
 // then draw the new frame on top -> moving things leave trails. No post-processing library needed.
 // Requires the renderer to be created with preserveDrawingBuffer: true (keeps the previous frame between draws)
 
@@ -9,7 +9,7 @@ function initMotionTrail() {
     fadeScene = new THREE.Scene();
     fadeCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     fadeMaterial = new THREE.MeshBasicMaterial({
-        color: 0x000000, transparent: true, depthTest: false, depthWrite: false
+        color: 0x03040d, transparent: true, depthTest: false, depthWrite: false // near-black navy = space
     });
     fadeScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), fadeMaterial));
 }

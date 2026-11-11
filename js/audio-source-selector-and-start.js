@@ -25,7 +25,7 @@ function getShareBlock() {
 const shareBlock = getShareBlock();
 const canShareAudio = !shareBlock;
 
-// Disable voice processing so the bass band survives when using a mic / Stereo Mix
+// Disable voice processing so the bass band survives (mic / Stereo Mix and shared system audio)
 const RAW_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
 
 let audioFile = null;
@@ -65,7 +65,7 @@ $('f-audio').onchange = (e) => {
 };
 
 async function getShareStream() {
-    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: RAW_AUDIO });
     if (stream.getAudioTracks().length === 0) {
         stream.getTracks().forEach(t => t.stop());
         throw new Error('No audio track: "Share system audio" was not checked.');
@@ -94,6 +94,7 @@ function unlockAudioContext() {
 // Throws so the caller can show a fitting message.
 async function startVisualizer(src, audioUrl) {
     unlockAudioContext();
+    sourceKind = src;
     analyser = audioCtx.createAnalyser();
     analyser.fftSize = 2048;              // ~23Hz per bin -> isolates the real bass band (20-150Hz)
     analyser.smoothingTimeConstant = 0.5; // less smoothing -> kicks hit fast and tight
@@ -121,6 +122,7 @@ async function startVisualizer(src, audioUrl) {
     init3DEngine();
     isStarted = true;
     animate();
+    window.dispatchEvent(new Event('visualizerstart')); // optional features (e.g. picture-in-picture) wake up
 }
 
 $('btn-start').onclick = async () => {

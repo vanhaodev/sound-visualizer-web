@@ -22,7 +22,8 @@ http.createServer((req, res) => {
             if (err || !stat.isFile()) { res.writeHead(404).end('Not found'); return; }
             res.writeHead(200, {
                 'Content-Type': MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
-                'Content-Length': stat.size
+                'Content-Length': stat.size,
+                'Cache-Control': 'no-store' // local dev: always serve the latest JS/CSS, never a cached copy
             });
             fs.createReadStream(filePath).pipe(res);
         });
