@@ -3,7 +3,7 @@
 // - street lamps: thin poles (one InstancedMesh) + glowing heads (one Points)
 // Everything wraps along her path like the buildings (see giant-city-layout.js). 3 draw calls in total.
 
-import { CITY, WRAP_GLSL, FOG_GLSL } from "./giant-city-layout.js?v=3";
+import { CITY, WRAP_GLSL, FOG_GLSL } from "./giant-city-layout.js?v=6";
 
 // --- ground + markings + lamp light pools ---
 const GROUND_VERT = /* glsl */`

@@ -55,9 +55,18 @@ lightning (chain length, hop speed, density, fade, style), camera pacing and mot
 Hosted for free on **GitHub Pages**, built from the root of the `main` branch
 (repo Settings -> Pages). Every push to `main` redeploys the site within about a minute.
 
-GitHub Pages lets browsers cache files for 10 minutes, so CSS/JS URLs carry an asset version (`?v=3`).
+GitHub Pages lets browsers cache files for 10 minutes, so CSS/JS URLs carry an asset version (`?v=6`).
 When you change any CSS/JS file, bump that number everywhere it appears (`index.html` and the imports at the
 top of `js/music-reactive-lightning.js`), otherwise visitors may get a new page with old cached scripts.
+
+### Release zip for other hosts
+
+```
+npm run build      # -> release/sound-visualizer-web.zip
+```
+
+Packs only what the page needs at runtime (`index.html`, `css/`, `js/`, `static/`), without the dev server,
+scripts, docs or git files. Unzip it into the host's web root. No dependencies, plain Node.
 
 ## Project structure
 
@@ -88,6 +97,7 @@ js/giant-city-layout.js                 shared city layout + shader helpers (flo
 js/giant-city-sky-anchors.js            mode 2 sky lightning anchors, flowing with the city
 static/models/miss_galaxy.glb           the mode 2 model (CC BY 4.0, see Credits)
 serve-visualizer-locally.js             tiny local static server
+build-release-zip.js                    npm run build -> minimal release zip
 ```
 
 ## Credits

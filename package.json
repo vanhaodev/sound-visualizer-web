@@ -1,5 +1,6 @@
 {
   "scripts": {
-    "start": "node serve-visualizer-locally.js"
+    "start": "node serve-visualizer-locally.js",
+    "build": "node build-release-zip.js"
   }
 }
