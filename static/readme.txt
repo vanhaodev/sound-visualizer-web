@@ -4,7 +4,7 @@ sample_song.mp3   (Sample Song 1)
   "METRONOME" - izna
 
 sample_song_2.mp3 (Sample Song 2)
-  "TALK" - ALLDAY PROJECT
+  "Gangsta" - Kehlani
 
 All rights belong to the artists and their labels.
 Included only to demo the visualizer. Not for commercial use, not redistributed for profit.

@@ -29,6 +29,19 @@ body { margin: 0; background: #000; overflow: hidden; font-family: var(--font); 
 }
 .btn:hover:not(:disabled) { background: var(--green); color: #000; }
 .btn:disabled { opacity: 0.2; }
+/* The one-click template button: a pulsing neon border to draw the eye (still while loading / disabled) */
+#btn-template:not(:disabled) { animation: neon-pulse 1.6s ease-in-out infinite; }
+@keyframes neon-pulse {
+    0%, 100% { box-shadow: 0 0 4px var(--green), 0 0 10px var(--green-glow), inset 0 0 4px var(--green-glow); }
+    50% {
+        border-color: #b6ffc8;
+        box-shadow: 0 0 8px var(--green), 0 0 22px var(--green), 0 0 44px var(--green-soft), inset 0 0 10px var(--green-soft);
+        text-shadow: 0 0 8px var(--green);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #btn-template:not(:disabled) { animation: none; box-shadow: 0 0 8px var(--green), 0 0 22px var(--green-soft); }
+}
 input[type="file"] { display: none; }
 
 /* Small helper text under an option or a control (shared by the source picker and the template panel) */
