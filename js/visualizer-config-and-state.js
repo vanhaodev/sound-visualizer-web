@@ -73,7 +73,7 @@ const CONFIG = {
 
     // Visual mode (the home dropdown picks it; M switches while playing, N toggles automatic switching):
     // 1 = free camera tour of the starfield with lightning | 2 = a galactic giant walks through a city
-    visualMode: 1,
+    visualMode: 2,
     autoModeMin: 30,         // Automatic switching: next mode change after a random time between autoModeMin...
     autoModeMax: 60,         // ...and autoModeMax seconds (then on the next strong kick)
     walkerModel: 'static/models/miss_galaxy.glb', // a GLB with a looping walk animation (in place)

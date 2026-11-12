@@ -7,7 +7,7 @@ and chain lightning that jumps between the stars in time with the music.
 
 ## Features
 
-- **Two visual modes** (home dropdown + Shuffle; M switches, N toggles shuffle; mode 1 by default) - mode 1: a camera tour of the starfield with all the lightning effects;
+- **Two visual modes** (home dropdown + Shuffle; M switches, N toggles shuffle; giant in the city by default) - mode 1: a camera tour of the starfield with all the lightning effects;
   mode 2: a galactic giant walks through space in slow motion, filmed like a giant from street level
   (feet passing by, down the street behind and ahead of her, a slow orbit around her legs); the lightning plays in the sky over the rooftops, pinned to the city; she walks down a city street: dark buildings that light up floor by floor like a giant equalizer, faint lane markings
   and street lamps (all shader-driven, a handful of draw calls)
@@ -55,7 +55,7 @@ lightning (chain length, hop speed, density, fade, style), camera pacing and mot
 Hosted for free on **GitHub Pages**, built from the root of the `main` branch
 (repo Settings -> Pages). Every push to `main` redeploys the site within about a minute.
 
-GitHub Pages lets browsers cache files for 10 minutes, so CSS/JS URLs carry an asset version (`?v=7`).
+GitHub Pages lets browsers cache files for 10 minutes, so CSS/JS URLs carry an asset version (`?v=8`).
 When you change any CSS/JS file, bump that number everywhere it appears (`index.html` and the imports at the
 top of `js/music-reactive-lightning.js`), otherwise visitors may get a new page with old cached scripts.
 
