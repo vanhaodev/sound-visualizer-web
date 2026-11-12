@@ -91,8 +91,31 @@ function onLoaded(gltf) {
 
 function load() {
     if (!THREE.GLTFLoader) { console.warn('GLTFLoader missing: mode 2 unavailable'); return; }
-    new THREE.GLTFLoader().load(CONFIG.walkerModel, onLoaded, undefined,
-        e => console.warn('Walker model failed to load, staying in mode 1:', e));
+    const loader = new THREE.GLTFLoader();
+    loader.load(CONFIG.walkerModel, onLoaded, undefined, (e) => {
+        console.warn('Walker model .glb failed to load, trying the embedded copy:', e);
+        loadEmbedded(loader);
+    });
+}
+
+const giveUp = (e) => console.warn('Walker model failed to load, staying in mode 1:', e);
+
+// The model as base64 inside a plain <script> (CONFIG.walkerModelEmbedded, made by `npm run build`): works on
+// hosts that serve JS but not .glb files, and under a CSP that blocks fetch/XHR but allows same-origin scripts
+function loadEmbedded(loader) {
+    if (!CONFIG.walkerModelEmbedded) return giveUp('no embedded copy configured');
+    const s = document.createElement('script');
+    s.src = CONFIG.walkerModelEmbedded;
+    s.onerror = () => giveUp('embedded copy not found: ' + CONFIG.walkerModelEmbedded);
+    s.onload = () => {
+        try {
+            const b64 = window.WALKER_MODEL_BASE64;
+            delete window.WALKER_MODEL_BASE64; // free the 5 MB string once decoded
+            const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+            loader.parse(bin.buffer, '', onLoaded, giveUp);
+        } catch (e) { giveUp(e); }
+    };
+    document.head.appendChild(s);
 }
 
 // intensity: 0-1 kick envelope
