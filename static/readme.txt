@@ -1,7 +1,7 @@
 SAMPLE ASSETS - FOR DEMO PURPOSES ONLY
 
 sample_song.mp3   (Sample Song 1)
-  "ICONIC BY MISTAKE" - LE SSERAFIM
+  "METRONOME" - izna
 
 sample_song_2.mp3 (Sample Song 2)
   "TALK" - ALLDAY PROJECT
