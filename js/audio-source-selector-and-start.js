@@ -96,9 +96,9 @@ function unlockAudioContext() {
     return audioCtx;
 }
 
-// Boot audio + scene. src: 'share' | 'mic' | 'file' (audioUrl required for 'file').
+// Boot audio + scene. src: 'share' | 'mic' | 'file' (audioBlob, a File or Blob, required for 'file').
 // Throws so the caller can show a fitting message.
-async function startVisualizer(src, audioUrl) {
+async function startVisualizer(src, audioBlob) {
     unlockAudioContext();
     sourceKind = src;
     analyser = audioCtx.createAnalyser();
@@ -108,8 +108,9 @@ async function startVisualizer(src, audioUrl) {
     analyser.maxDecibels = -10;           // more headroom so loud and quiet music read differently
 
     if (src === 'file') {
-        calibrateFileGain(audioUrl); // runs in the background: one constant gain for the whole song
-        const audioEl = new Audio(audioUrl);
+        calibrateFileGain(audioBlob); // runs in the background: one constant gain for the whole song
+        // a blob: URL is always same-origin -> the analyser gets real data (a cross-origin URL would be silent)
+        const audioEl = new Audio(URL.createObjectURL(audioBlob));
         audioEl.loop = true;
         source = audioCtx.createMediaElementSource(audioEl);
         source.connect(analyser);
@@ -140,7 +141,7 @@ async function startVisualizer(src, audioUrl) {
 $('btn-start').onclick = async () => {
     const src = getSrc();
     try {
-        await startVisualizer(src, audioFile && URL.createObjectURL(audioFile));
+        await startVisualizer(src, audioFile);
     } catch (e) {
         console.error(e);
         alert('Could not capture audio!\n' + ERROR_TIPS[src]);

@@ -16,12 +16,12 @@ if (location.protocol === 'file:') {
     $('template-hint').textContent = 'Run start-visualizer.cmd, then open http://localhost:5173';
 }
 
-// Download into a blob URL -> always same-origin, even if the host redirects large files to a CDN/other domain
-// (with a direct URL, createMediaElementSource would output silence because of CORS)
-async function fetchAsBlobUrl(url) {
+// Download into a Blob -> played from a same-origin blob: URL, even if the host redirects large files to a
+// CDN/other domain (with a direct URL, createMediaElementSource would output silence because of CORS)
+async function fetchAsBlob(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status} loading ${url}`);
-    return URL.createObjectURL(await res.blob());
+    return res.blob();
 }
 
 templateBtn.onclick = async () => {
@@ -29,7 +29,7 @@ templateBtn.onclick = async () => {
     templateBtn.disabled = true;
     templateBtn.textContent = 'LOADING...';
     try {
-        await startVisualizer('file', await fetchAsBlobUrl(TEMPLATES[templateSelect.value].audio));
+        await startVisualizer('file', await fetchAsBlob(TEMPLATES[templateSelect.value].audio));
     } catch (e) {
         console.error(e);
         alert('Could not play the template!\n' + e.message);

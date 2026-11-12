@@ -10,9 +10,9 @@
 // Optional (ES module): CONFIG.cityBuildings = 0 or remove its <script> tag in index.html.
 // Exposes window.cityFx = { update(dt, flow, intensity) }, called by the animation loop.
 
-import { CITY, WRAP_GLSL, FOG_GLSL, makeSharedUniforms } from "./giant-city-layout.js?v=6";
-import { buildStreet } from "./giant-city-street.js?v=6";
-import { buildSkyAnchors, updateSkyAnchors } from "./giant-city-sky-anchors.js?v=6";
+import { CITY, WRAP_GLSL, FOG_GLSL, makeSharedUniforms } from "./giant-city-layout.js?v=7";
+import { buildStreet } from "./giant-city-street.js?v=7";
+import { buildSkyAnchors, updateSkyAnchors } from "./giant-city-sky-anchors.js?v=7";
 
 // Every building is one bar of a giant equalizer: its windows light up from the ground to a height that follows the
 // level of its frequency band (quiet -> a few floors, loud -> the whole tower). Bands are log-spaced.

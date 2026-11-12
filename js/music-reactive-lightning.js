@@ -13,9 +13,9 @@
 // 'lightningstrike' { star, power, color } every time a star gets hit.
 
 // ?v= must match the asset version in index.html (cache busting, see README "Deployment")
-import { zigzag3D, sproutBranch3D } from "./lightning-bolt-geometry-3d.js?v=6";
-import { pickStartStar, pickNextStar, zapStar, updateZappedStars, anchorScale, chainsRunToEnd, chainsOnBeatOnly } from "./lightning-star-targets.js?v=6";
-import { paletteFor, makeOnsetDetector, detectOnset } from "./lightning-frequency-colors.js?v=6";
+import { zigzag3D, sproutBranch3D } from "./lightning-bolt-geometry-3d.js?v=7";
+import { pickStartStar, pickNextStar, zapStar, updateZappedStars, anchorScale, chainsRunToEnd, chainsOnBeatOnly } from "./lightning-star-targets.js?v=7";
+import { paletteFor, makeOnsetDetector, detectOnset } from "./lightning-frequency-colors.js?v=7";
 
 const PIXEL_H = 240;        // 'pixel' style: vertical resolution of the lightning layer (lower = chunkier pixels)
 const RADIAL_SEGS = 5;      // sides of the tube that forms an arc's core

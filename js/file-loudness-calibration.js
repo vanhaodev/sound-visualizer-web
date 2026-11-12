@@ -14,10 +14,12 @@ const SCAN_RATE = 20;         // spectrum samples per second of audio
 // (98 %) boosted files ~2 dB hotter than sharing them and soft bass notes started to read as kicks
 const LOUD_PERCENTILE = 0.999;
 
-async function calibrateFileGain(url) {
+// blob: the File / Blob being played. Read straight from memory, not fetched from its blob: URL, because
+// sandboxed hosts block fetching blob URLs (CSP connect-src) while still letting <audio> play them
+async function calibrateFileGain(blob) {
     fileGainDb = 0;
     try {
-        const encoded = await (await fetch(url)).arrayBuffer();
+        const encoded = await blob.arrayBuffer();
         const audio = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(encoded);
         const ctx = new OfflineAudioContext(1, audio.length, audio.sampleRate);
         const src = ctx.createBufferSource();
